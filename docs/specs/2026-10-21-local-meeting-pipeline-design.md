@@ -1,7 +1,7 @@
-Status: draft (awaiting owner approval after Gate P + Astra consult)
+Status: draft (Gate P + Astra consult folded in 2026-10-21; owner approval pending)
 ID namespace: none
 
-# Local meeting pipeline: record → Parakeet → Senko → Claude API → Obsidian
+# Local meeting pipeline: record → Parakeet → Claude API → Obsidian
 
 ## 0 Intent and why
 Сьогоднішній пайплайн (`docs/research/2026-10-21-current-system-baseline.md`)
@@ -47,56 +47,73 @@ ID namespace: none
 ```
 Hammerspoon (mic-usage poll, unchanged)
    └─ meetrec.app  →  ~/Recordings/<base>.{mic,sys}.m4a [+ .screen.mov]
-         └─ on stop: uv run --env-file .env pipeline/process.py <base> <title> <start> <end> <mode>
-                 1. ffmpeg amix+dynaudnorm → <base>.wav (16 kHz mono)        [as today]
-                 2. parakeet_mlx → sentences with timestamps                  [replaces MacWhisper + language probe]
-                 3. senko (if DIARIZE=1) → speaker turns; sentence ← max-overlap speaker
-                 4. Claude API, one call, structured output {title, summary_md}
-                 5. write <INBOX>/<title> <date>.md ; touch <base>.done
-                 6. screen .mov + audio → <base>.screen.mp4                  [as today]
-                 7. notify (Hammerspoon shows ✅/❌ as today)
+         └─ on stop: hs.task → bin/meeting-pipeline <base> <title> <start> <end> <mode>
+                       (executable; sets PATH, loads .env, exec caffeinate -i uv run --script pipeline/process.py …)
+                 1. mode=mic → mic track; mode=mix → ffmpeg amix+dynaudnorm → 16 kHz mono wav   [as today]
+                 2. parakeet_mlx (v3, 120 s chunks / 15 s overlap) → <base>.transcript.json      [replaces MacWhisper + language probe]
+                 3. Claude API, one call, structured output {title, summary_md}
+                 4. write <base>.md, place as <INBOX>/<YYYY-MM-DD HH-MM> <title>.md (one stable name per base)
+                 5. screen .mov + audio → <base>.screen.mp4                                        [as today]
+                 6. touch <base>.done only when 3–5 all succeeded; notify (Hammerspoon ✅/❌ as today)
+   Re-run / recovery: `process.py --sweep` finishes every base without .done, skipping stages
+   whose artifact exists. Not auto-invoked; Hammerspoon's sweep notifies + shows the command.
 ```
 
 Owner decisions (2026-10-21, `.claude/memory/decisions.md`): Parakeet V3; no VPS;
-Obsidian-only output; Claude API; public repo; diarization if low-friction.
+Obsidian-only output; Claude API; public repo; diarization only if low-friction (→ deferred units 2.x).
 
 Author's calls (mine; owner may override):
 - **One Python file** `pipeline/process.py` with PEP 723 inline deps
-  (`anthropic`, `parakeet-mlx`, `senko`), run via `uv run --script`. Same argv
-  contract as today's `transcribe-and-post.sh`, so the Hammerspoon change is one
-  path. Why Python, not bash: ASR and diarization are Python libraries; calling
-  them in-process avoids re-loading the model and parsing CLI output.
+  (`anthropic`, `parakeet-mlx`) + committed uv lock, run via `uv run --script`
+  from the executable launcher `bin/meeting-pipeline` (Hammerspoon's `hs.task`
+  takes an executable + argv, not a shell string). Same argv contract as today's
+  `transcribe-and-post.sh`. Why Python, not bash: ASR is a Python library;
+  in-process avoids re-loading the model and parsing CLI output.
 - **Config via `.env`** (gitignored; `.env.example` committed): `ANTHROPIC_API_KEY`,
-  `SUMMARY_MODEL` (default `claude-sonnet-5-5`), `OBSIDIAN_INBOX`, `RECORDINGS_DIR`,
-  `DIARIZE`. No other config surface.
+  `SUMMARY_MODEL` (default `claude-sonnet-5-5`), `OBSIDIAN_INBOX`, `RECORDINGS_DIR`.
+  No other config surface.
 - **Summary + title in one Claude call** with structured output; the prompt keeps
   today's contract (overview 2–4 sentences, `## Key points`, `## Decisions`,
   `## Action items` as `- [ ]`, transcript's own language, never invent).
-- **Offline/API failure is not a loss**: the `.md` is still written with the
-  transcript and frontmatter `summary: pending`; re-run is the same command.
-  Hammerspoon's existing leftover sweep re-runs any `<base>` without `.done`.
-- **Diarization = Senko** (Core ML, no HF token, ~8 s/hour), speaker per
-  sentence by greatest overlap; generic `Speaker 1..N` labels, no enrollment.
-  Scribe (Trail of Bits) is the fallback integration if the Senko merge exceeds
-  ~40 LOC.
-- **Sleep**: wrap the run in `caffeinate -i`; lid close pauses the job, it
-  resumes on wake (no queue daemon).
+- **Durable stages, truthful completion**: `<base>.transcript.json` persists the
+  ASR result; `<base>.md` is written beside the recording before it is placed in
+  the inbox; `.done` exists only when note, summary and mux all succeeded. API
+  failure → `summary: pending`, non-zero exit, ❌ notification; `process.py --sweep`
+  finishes pending bases idempotently. Hammerspoon's existing sweep keeps
+  notifying with the command (verified: it never re-ran jobs). `prune` must not
+  delete a base without `.done` before 90 days.
+- **One stable note name per base**: `<YYYY-MM-DD HH-MM> <title>.md` — the time
+  prefix prevents same-day same-title collisions; a re-run renames, never duplicates.
+- **Diarization is not on the release path.** Deferred 2.1 = "Me / Others" from
+  the separate mic/sys tracks (zero deps); 2.2 = Senko experiment on copies.
+- **All paths from one root**: `install.sh` sets `REPO`; Lua, scripts and the
+  launcher derive binaries, prune and launcher paths from it; `RECORDINGS_DIR`,
+  `OBSIDIAN_INBOX` from `.env`. No `~/Scripts` literals.
+- **Live activation happens once, at cutover**, with a backup and a tested
+  `--rollback`; everything before runs on copies of recordings.
+- **Sleep**: `caffeinate -i` against idle sleep; lid close pauses the job,
+  `--sweep` finishes it after wake (no queue daemon).
 - **Markdown layout**: YAML frontmatter (`date`, `app`, `started`, `ended`,
   `duration_min`, `model`, `summary: done|pending`, `recording: <base>`), then
-  summary, then `## Transcript` as `[hh:mm:ss] Speaker N: text` lines. The
+  summary, then `## Transcript` as `[hh:mm:ss] text` lines (speaker labels only
+  once 2.x lands). The
   ```tabs``` layout of the current n8n export is dropped (its summary tabs were
   always empty).
 
 ## 6 Left to the builder
-- Exact senko API calls and the overlap merge.
 - Structured-output schema and the anthropic SDK call shape (read the `claude-api`
-  skill; do not write from memory).
+  skill; do not write from memory); `stop_reason` refusal/max_tokens handling;
+  `count_tokens` before the call.
+- Explicit `chunk_duration=120, overlap_duration=15` on the Python API (its
+  default is unchunked — the spike's numbers came from the CLI defaults).
 - Whether `--local-attention` is needed on 24 GB for 2–3 h recordings (measure).
 - `install.sh` details (symlink vs copy of `init.lua`, codesign of meetrec.app
   keeping bundle id `com.lipchey.meetrec` so TCC grants survive).
 
 ## 7 Acceptance for the whole design
 A real meeting recorded by the usual Hammerspoon flow ends; within ~5 minutes the
-`.md` with summary and labelled transcript is in the inbox; nothing was sent to
-the VPS; `git grep` finds no secret; the YouTube viewer can reproduce it from
-`README.md` with `install.sh` + `.env`.
+`.md` with summary and timestamped transcript is in the inbox; nothing was sent to
+the VPS; `git log -p` finds no secret or personal path; a fresh macOS user account
+reproduces a manual recording → note from `README.md` with `install.sh` + `.env`;
+the README states plainly what leaves the Mac (transcript text → Claude API;
+notes → a Google-Drive-backed vault).
