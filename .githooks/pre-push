@@ -1,0 +1,8 @@
+#!/bin/sh
+# Public repo: refuse to push tracked secrets or recordings.
+if git ls-files | grep -qE '(^|/)\.env$|\.(m4a|wav|mov|mp4)$'; then
+  echo "pre-push: .env or media is tracked — untrack before pushing" >&2; exit 1
+fi
+if git grep -nIE 'sk-ant-[A-Za-z0-9_-]{20,}' -- . ':!.githooks/pre-push' >/dev/null 2>&1; then
+  echo "pre-push: Anthropic API key pattern found in tracked files" >&2; exit 1
+fi

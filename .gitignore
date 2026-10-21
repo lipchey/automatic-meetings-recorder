@@ -1,0 +1,12 @@
+.handoff/
+.codegraph/
+.env
+.DS_Store
+__pycache__/
+.venv/
+*.wav
+*.m4a
+*.mov
+*.mp4
+.vscode/
+*.log
