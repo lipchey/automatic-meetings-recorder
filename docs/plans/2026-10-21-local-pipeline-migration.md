@@ -149,6 +149,10 @@ recording is transcribed into its own inbox.
   new dependency; transcript lines become `[hh:mm:ss] Я|Співрозмовник: text`
   (labels follow `UI_LANG`). After 1.7.
 - `2.2 senko-diarization` — not chosen; kept only as a note for multi-party calls.
+- `2.3 local-summarizer` — `SUMMARY_BACKEND=openai-compatible` + `SUMMARY_BASE_URL`
+  (llama.cpp `llama-server` or Ollama), default model Qwen3.5-9B (Mac) / 4B
+  (Windows); structured-extraction prompt, 32k context, thinking off; A/B MamayLM
+  12B v2 / Lapa 12B on Ukrainian calls. After 1.8.
 - `whisper-fallback` — `ASR_BACKEND=whisper` via `mlx_whisper` large-v3; only if 1.4 fails.
 - `crm-directus`, `telegram-triage` — owner decided out of v1.
 
@@ -171,10 +175,11 @@ changes the live Mac configuration.
 - Default `SUMMARY_MODEL=claude-sonnet-5-5` — author's assumption; cost table in spec.
 - Owner 2026-10-24: ASR threshold = business uk/en calls (1.4); repo language =
   English code/README, UI strings uk/en via `UI_LANG`; diarization = 2.1 channel-based.
-- Open (non-blocking for v1): a local offline summarizer option for viewers on
-  16 GB Mac / Windows — research `docs/research/2026-10-24-local-llm-summarizer-options.md`.
-  If adopted it becomes deferred unit `2.3 local-summarizer` (`SUMMARY_BACKEND=
-  claude|ollama`, same prompt contract), documented in 1.8 as the offline path.
+- Local offline summarizer for viewers (16 GB Mac / Windows) — decided 2026-10-24
+  from `docs/research/2026-10-24-local-llm-summarizer-options.md` §Synthesis:
+  general small LLM (Qwen3.5-9B Mac / 4B Windows), no specialist model; becomes
+  deferred unit `2.3 local-summarizer` (`SUMMARY_BACKEND=claude|openai-compatible`,
+  same prompt contract); README 1.8 documents it as the private offline path.
 - Gate P 2026-10-21 (Astra, xhigh): 12 findings, all VALID, folded in above
   (launcher executable, stable names, chunking, recovery stages, install root,
   late activation + rollback, copies for acceptance, serial order, frozen cohort,

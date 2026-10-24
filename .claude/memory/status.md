@@ -11,8 +11,8 @@
   написаний. Репо публічний на GitHub, лише документація.
 - Поточна робоча система (Hammerspoon → meetrec → MacWhisper → n8n на VPS) далі
   працює без змін до юніта 1.7 cutover.
-- Ресерч локальних LLM для саммарі для глядачів (16 GB Mac / Windows) — результат у
-  `docs/research/2026-10-24-local-llm-summarizer-options.md`; не блокує v1.
+- Ресерч локальних LLM для саммарі (16 GB Mac / Windows) завершено — висновок у
+  `docs/research/2026-10-24-local-llm-summarizer-options.md` §Synthesis → deferred юніт 2.3.
 
 ## Блокери
 - ⛔ `anthropic-api-key` — ключа на машині нема; блокує 1.5.
