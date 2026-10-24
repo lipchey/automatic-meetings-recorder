@@ -1,4 +1,4 @@
-Status: draft (Gate P passed with amendments 2026-10-21; owner approval pending)
+Status: active (Gate P 2026-10-21; owner decisions 2026-10-24 folded in; execution pending)
 ID namespace: none
 Roadmap rows: `docs/plans/roadmap/01-readiness.md`
 
@@ -44,6 +44,9 @@ Edits allowed in the copy, nothing installed live:
   download) — the Hammerspoon activation step is a SEPARATE flag used only in 1.7;
 - sweep stale references to `transcribe-and-post.sh`/MacWhisper in comments and
   notification strings; comments follow the repo comment rule;
+- UI strings (dialogs, notifications, menu titles) move into one Lua table with
+  `uk` and `en` entries, selected by `UI_LANG` from `.env` (owner 2026-10-24:
+  default `uk`); code and comments in English;
 - grep the copy for secrets/absolute personal paths; `.env.example` lists every knob.
 Acceptance: `install.sh --build` on this Mac produces `recorder/bin/{micusers,meetrec.app}`;
 `codesign -dv` shows bundle id `com.lipchey.meetrec`; `diff` of the imported Lua vs
@@ -85,8 +88,11 @@ recent other bases with a MacWhisper `.txt` as of this date, listed in the recei
 For each: word counts, 3 fixed 30-s windows chosen to contain names, numbers,
 negations and a language switch; the owner LISTENS to the audio for those windows
 and marks Parakeet / MacWhisper / both wrong. Missing coverage = gate stays open.
-⛔ `asr-quality-verdict`: невідомо, чи Parakeet-only проходить поріг власника на
-cohort; БЛОКУЄ 1.5–1.7; ЗАКРИЄ рішення власника на receipt у `docs/acceptance/`;
+Threshold (owner 2026-10-24): business uk/en calls must be at least as usable as
+the MacWhisper transcript in the listened windows; personal ru/uk casual calls are
+best-effort and cannot fail the gate on their own.
+⛔ `asr-quality-verdict`: невідомо, чи Parakeet-only проходить поріг (бізнес uk/en)
+на cohort; БЛОКУЄ 1.5–1.7; ЗАКРИЄ рішення власника на receipt у `docs/acceptance/`;
 «ні» → активувати deferred `whisper-fallback` перед 1.5; відкрито 2026-10-21.
 
 ### 1.5 `claude-summary` — draft (⛔ `anthropic-api-key`)
@@ -138,10 +144,11 @@ Acceptance: a fresh macOS user account on this Mac follows README only → a man
 recording is transcribed into its own inbox.
 
 ### Deferred
-- `2.1 channel-diarization` — "Me / Others" labels from the separate mic/sys tracks
-  (mix mode only), energy comparison per sentence, no new dependency. After 1.7.
-- `2.2 senko-diarization` — Speaker 1..N via Senko as an experiment on copies;
-  never on the release path until interruptions/short turns are checked.
+- `2.1 channel-diarization` — owner 2026-10-24: chosen. "Me / Others" labels from
+  the separate mic/sys tracks (mix mode only), energy comparison per sentence, no
+  new dependency; transcript lines become `[hh:mm:ss] Я|Співрозмовник: text`
+  (labels follow `UI_LANG`). After 1.7.
+- `2.2 senko-diarization` — not chosen; kept only as a note for multi-party calls.
 - `whisper-fallback` — `ASR_BACKEND=whisper` via `mlx_whisper` large-v3; only if 1.4 fails.
 - `crm-directus`, `telegram-triage` — owner decided out of v1.
 
@@ -162,7 +169,26 @@ changes the live Mac configuration.
 - Gates: `asr-quality-verdict` (1.4→1.5), `anthropic-api-key` (1.5). Format
   `docs/CONVENTIONS.md` §6.
 - Default `SUMMARY_MODEL=claude-sonnet-5-5` — author's assumption; cost table in spec.
+- Owner 2026-10-24: ASR threshold = business uk/en calls (1.4); repo language =
+  English code/README, UI strings uk/en via `UI_LANG`; diarization = 2.1 channel-based.
+- Open (non-blocking for v1): a local offline summarizer option for viewers on
+  16 GB Mac / Windows — research `docs/research/2026-10-24-local-llm-summarizer-options.md`.
+  If adopted it becomes deferred unit `2.3 local-summarizer` (`SUMMARY_BACKEND=
+  claude|ollama`, same prompt contract), documented in 1.8 as the offline path.
 - Gate P 2026-10-21 (Astra, xhigh): 12 findings, all VALID, folded in above
   (launcher executable, stable names, chunking, recovery stages, install root,
   late activation + rollback, copies for acceptance, serial order, frozen cohort,
   no Scribe hatch, `scripts/verify`, comment sweep).
+
+## Execution prompt (paste into a fresh session)
+
+```
+Execute docs/plans/2026-10-21-local-pipeline-migration.md in
+/Users/admin/Projects/automatic-meetings-recorder, starting at unit 1.2.
+Read first: .claude/memory/status.md, docs/specs/2026-10-21-local-meeting-pipeline-design.md,
+the plan, docs/research/2026-10-21-current-system-baseline.md. Base: origin/main.
+Worktree: /Users/admin/Projects/worktrees/automatic-meetings-recorder-local-pipeline-migration
+(branch local-pipeline-migration). One PR per unit; Gate C before each commit.
+Units 1.2–1.6 must not change the live Mac config (~/.hammerspoon, ~/Scripts) —
+work on copies of recordings. Stop at ⛔ gates and ask the owner. Ponytail mode.
+```

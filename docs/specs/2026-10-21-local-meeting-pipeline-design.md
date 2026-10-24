@@ -1,4 +1,4 @@
-Status: draft (Gate P + Astra consult folded in 2026-10-21; owner approval pending)
+Status: active (Gate P + Astra consult 2026-10-21; owner decisions 2026-10-24 folded in)
 ID namespace: none
 
 # Local meeting pipeline: record → Parakeet → Claude API → Obsidian
@@ -36,6 +36,8 @@ ID namespace: none
   (модель `mlx-community/parakeet-tdt-0.6b-v3` у HF-кеші), `mlx_whisper` стоять.
 - Obsidian vault змонтований локально через Google Drive for desktop:
   `…/My Drive/ObsidianVault/00-Inbox/transcriptions` — звичайна папка на диску.
+- Поріг якості ASR (власник 2026-10-24): бізнес-дзвінки uk/en мають бути не
+  гірші за поточний транскрипт; особисті ru/uk — best-effort.
 - Parakeet v3: 25 мов включно з uk/ru/en, автодетект мови, але code-switching
   всередині файлу офіційно «не повністю натренований»; спайк показав −40 % слів
   на побутовій ru/uk розмові і паритет на бізнес-дзвінку uk/en
@@ -70,8 +72,11 @@ Author's calls (mine; owner may override):
   `transcribe-and-post.sh`. Why Python, not bash: ASR is a Python library;
   in-process avoids re-loading the model and parsing CLI output.
 - **Config via `.env`** (gitignored; `.env.example` committed): `ANTHROPIC_API_KEY`,
-  `SUMMARY_MODEL` (default `claude-sonnet-5-5`), `OBSIDIAN_INBOX`, `RECORDINGS_DIR`.
-  No other config surface.
+  `SUMMARY_MODEL` (default `claude-sonnet-5-5`), `OBSIDIAN_INBOX`, `RECORDINGS_DIR`,
+  `UI_LANG` (`uk` default | `en`, selects the Hammerspoon strings table; owner
+  2026-10-24). No other config surface.
+- **Repo language** (owner 2026-10-24): code, comments and README in English; user-
+  facing strings on the Mac in `uk`/`en` per `UI_LANG`.
 - **Summary + title in one Claude call** with structured output; the prompt keeps
   today's contract (overview 2–4 sentences, `## Key points`, `## Decisions`,
   `## Action items` as `- [ ]`, transcript's own language, never invent).
@@ -84,8 +89,9 @@ Author's calls (mine; owner may override):
   delete a base without `.done` before 90 days.
 - **One stable note name per base**: `<YYYY-MM-DD HH-MM> <title>.md` — the time
   prefix prevents same-day same-title collisions; a re-run renames, never duplicates.
-- **Diarization is not on the release path.** Deferred 2.1 = "Me / Others" from
-  the separate mic/sys tracks (zero deps); 2.2 = Senko experiment on copies.
+- **Diarization is not on the release path.** Owner 2026-10-24 chose deferred 2.1 =
+  "Me / Others" from the separate mic/sys tracks (zero deps, mix mode only);
+  Senko rejected for v1.
 - **All paths from one root**: `install.sh` sets `REPO`; Lua, scripts and the
   launcher derive binaries, prune and launcher paths from it; `RECORDINGS_DIR`,
   `OBSIDIAN_INBOX` from `.env`. No `~/Scripts` literals.

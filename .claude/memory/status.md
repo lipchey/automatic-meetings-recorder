@@ -1,23 +1,25 @@
 # Статус
 
-Оновлено: 2026-10-21
+Оновлено: 2026-10-24
 
 ## Наступні дії
-- Виконати план `docs/plans/2026-10-21-local-pipeline-migration.md` у свіжій
-  сесії (execution prompt наприкінці плану).
+- Свіжа сесія виконує `docs/plans/2026-10-21-local-pipeline-migration.md` з юніта
+  1.2 (execution prompt — у плані §Execution prompt). Спочатку прочитати spec.
 
 ## Активні фронти
-- Планування завершене 2026-10-21; код ще не написаний. Поточна робоча система
-  (Hammerspoon → meetrec → MacWhisper → n8n на VPS) далі працює без змін до
-  моменту перемикання.
+- Планування закрите 2026-10-24 (Gate P + Astra + рішення власника). Код ще не
+  написаний. Репо публічний на GitHub, лише документація.
+- Поточна робоча система (Hammerspoon → meetrec → MacWhisper → n8n на VPS) далі
+  працює без змін до юніта 1.7 cutover.
+- Ресерч локальних LLM для саммарі для глядачів (16 GB Mac / Windows) — результат у
+  `docs/research/2026-10-24-local-llm-summarizer-options.md`; не блокує v1.
 
 ## Блокери
-- `ANTHROPIC_API_KEY` не заданий на машині — потрібен перед юнітом саммарі.
+- ⛔ `anthropic-api-key` — ключа на машині нема; блокує 1.5.
 
 ## Людські й зовнішні гейти
-- Див. ⛔ у плані `docs/plans/2026-10-21-local-pipeline-migration.md` §Decisions.
+- ⛔ `asr-quality-verdict` (після 1.4) і ⛔ `anthropic-api-key` (1.5) — текст у плані §Units.
 
 ## Відкладено й прийнятий борг
-- CRM-інтеграція (Directus) і Telegram-тріаж — свідомо не в v1.
-- Мертві launch agents `com.admin.movetranscriptions`, `com.admin.whisperautomove`
-  — прибрати при перемиканні.
+- 2.1 channel-diarization після cutover; CRM/Directus і Telegram-тріаж — не в v1.
+- Мертві launch agents і prune без перевірки `.done` — закриваються в 1.7.
