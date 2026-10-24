@@ -188,12 +188,12 @@ changes the live Mac configuration.
 ## Execution prompt (paste into a fresh session)
 
 ```
-Execute docs/plans/2026-10-21-local-pipeline-migration.md in
-/Users/admin/Projects/automatic-meetings-recorder, starting at unit 1.2.
+Execute docs/plans/2026-10-21-local-pipeline-migration.md in the
+automatic-meetings-recorder checkout, starting at unit 1.2.
 Read first: .claude/memory/status.md, docs/specs/2026-10-21-local-meeting-pipeline-design.md,
 the plan, docs/research/2026-10-21-current-system-baseline.md. Base: origin/main.
-Worktree: /Users/admin/Projects/worktrees/automatic-meetings-recorder-local-pipeline-migration
-(branch local-pipeline-migration). One PR per unit; Gate C before each commit.
+Worktree: ../worktrees/automatic-meetings-recorder-local-pipeline-migration
+(branch local-pipeline-migration, from origin/main). One PR per unit; Gate C before each commit.
 Units 1.2–1.6 must not change the live Mac config (~/.hammerspoon, ~/Scripts) —
 work on copies of recordings. Stop at ⛔ gates and ask the owner. Ponytail mode.
 ```
